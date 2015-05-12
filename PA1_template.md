@@ -1,16 +1,12 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
----
+# Reproducible Research: Peer Assessment 1
 
 ## Loading and preprocessing the data
 
 Since the zip file that we are going to use in this analysis is already in the
 repository, the first step is to unzip the csv file and load it into a data 
 frame.  
-```{r, echo = TRUE}
+
+```r
 unzip("activity.zip")
 df_activity<-read.csv("activity.csv")
 ```
@@ -24,7 +20,8 @@ to remove NA Values.
 I use **sqldf** package to manipulate the dataset. The goal is to aggregate the 
 total steps by day.
 
-```{r , echo=TRUE, results='asis', message=FALSE}
+
+```r
 library(sqldf)
 
 df_activity_complete<- df_activity[complete.cases(df_activity[,1]), ]
@@ -36,18 +33,23 @@ We can now create the requested histogram.
 I will also plot an additional line with the **mean** value.  
 
 
-```{r , echo=TRUE}
+
+```r
 hist(report_data$total_steps, col='green', 
      main = 'Histogram of the total number of steps per day', 
      xlab = 'Number of daily steps')
 abline(v=mean(report_data$total_steps), col = 'red', lwd = 2)
+```
 
+![](PA1_template_files/figure-html/unnamed-chunk-3-1.png) 
+
+```r
 mean_value <- mean(report_data$total_steps)
 median_value <-prettyNum(median(report_data$total_steps))
 ```
 
-The **median** value is **`r median_value`**.  
-The **mean** value is **`r prettyNum(mean_value)`**.  
+The **median** value is **10765**.  
+The **mean** value is **10766.19**.  
 Since the values are so close, this is why I only plotted the line with the 
 **mean** value.
 
@@ -61,7 +63,8 @@ average of steps in each interval.
 The second step is to convert the intervals column into time in order to 
 be able to plot the data with the proper axis values.
 
-```{r, echo=TRUE}
+
+```r
 report_data<-sqldf("select interval, avg(steps) as avg_steps 
                    from df_activity_complete group by interval")
 report_data$interval<-as.POSIXct(formatC(report_data$interval, width=4, 
@@ -72,7 +75,8 @@ report_data$interval<-as.POSIXct(formatC(report_data$interval, width=4,
 I will **ggplot2** package to plot the data and **scales** in order to format 
 the x axis.
 
-```{r, echo=TRUE}
+
+```r
 library(ggplot2)
 library(scales)
 
@@ -80,30 +84,40 @@ qplot(report_data$interval, report_data$avg_steps,
       geom='line', 
       xlab='Time (Hours and Minutes)', ylab='Average Number of Steps') +
     scale_x_datetime(labels = date_format("%H:%M"))
+```
 
+![](PA1_template_files/figure-html/unnamed-chunk-5-1.png) 
+
+```r
 time_interval<-format(report_data[report_data$avg_steps==
                                       max(report_data$avg_steps), 1],
                       "%H:%M")
 ```
 
 The 5 minute interval that has more steps across all days starts at 
-**`r time_interval`.**  
+**08:35.**  
 
 
 ## Imputing missing values
 
 First step is to build a dataframe with the missing values and then, count the rows of the resulting dataframe
-```{r, echo = TRUE}
+
+```r
 df_na_activity<-df_activity[is.na(df_activity$steps)==TRUE, ]
 nr_missing_cases <- nrow(df_na_activity)
 nr_missing_cases
 ```
 
-The number of missing cases is **`r nr_missing_cases`**
+```
+## [1] 2304
+```
+
+The number of missing cases is **2304**
 
 The strategy to input the missing values is to calculate the mean for the intervals across all days and assign it to the missing intervals.
 
-```{r, echo=TRUE}
+
+```r
 #Calculates the mean for each interval
 df_mean_activity<-sqldf("select interval, avg(steps) as avg_steps from df_activity_complete group by interval")
 
@@ -116,37 +130,41 @@ colnames(df_filled_activity) = c("steps","date","interval")
 
 #data frames binding
 df_new_activity<-rbind(df_activity_complete, df_filled_activity)
-
 ```
 
 Now, it is necessary to recalculate the report data to extend it to the full dataset and plot the results. As in the first chart, I will add an additional line with the **mean**
 
-```{r, echo=TRUE}
+
+```r
 report_data<-sqldf("select date, sum(steps) as total_steps from df_new_activity group by date")
 
 #Plots
 hist(report_data$total_steps, col='green')
 abline(v=median(report_data$total_steps), col='red', lwd=5)
+```
 
+![](PA1_template_files/figure-html/unnamed-chunk-8-1.png) 
+
+```r
 #values to report
 median_value<-median(report_data$total_steps)
 mean_value<-mean(report_data$total_steps)
-
 ```
 
-The **median** value is **`r prettyNum(median_value)`**.  
-The **mean** value is **`r prettyNum(mean_value)`**.  
+The **median** value is **10766.19**.  
+The **mean** value is **10766.19**.  
 
 The median became the mean value. This means that the previous median had less occurrences that the number of missing days and hence, the change.
 
-As per the histogram, there was no significant changes.
+As per the histogram, there was no significant change.
 
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
 
-```{r, echo=TRUE,message=FALSE}
+
+```r
 library(ggplot2)
 library(lubridate)
 
@@ -161,5 +179,7 @@ report_data<-sqldf("select weekday, interval, avg(steps) steps from df_new_activ
 
 qplot(data=report_data, interval, steps, facets = weekday~., geom="line")
 ```
+
+![](PA1_template_files/figure-html/unnamed-chunk-9-1.png) 
 
 There are no morning walks on weekends.
