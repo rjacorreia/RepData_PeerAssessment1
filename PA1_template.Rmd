@@ -145,21 +145,26 @@ As per the histogram, there was no significant changes.
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
+In order to understand if a given day is weekday or weekend, we will use the boolean function is.weekend (from chron library) to assign the proper value to a new column in a dataframe
 
 ```{r, echo=TRUE,message=FALSE}
-library(ggplot2)
+library(chron)
 library(lubridate)
 
+#start by assuming that everyday is weekday
 df_new_activity$weekday<-"weekday"
-df_new_activity$weekday[weekdays(ymd(df_new_activity$date))=="Saturday"]<- "weekend"
-df_new_activity$weekday[weekdays(ymd(df_new_activity$date))=="Sunday"]<- "weekend"
+#update the column value to weekend where the date is TRUE on the is.weekend test
+df_new_activity$weekday[is.weekend(ymd(df_activity_complete$date))==TRUE]<- "weekend"
 
-
+#calculate data to report
 report_data<-sqldf("select weekday, interval, avg(steps) steps from df_new_activity group by weekday, interval")
 
+#converting x axis to time
+report_data$interval<-as.POSIXct(formatC(report_data$interval, width=4, 
+                                         flag="0"), 
+                                 format = '%H%M')
 
-
-qplot(data=report_data, interval, steps, facets = weekday~., geom="line")
+#plot data
+qplot(data=report_data, interval, steps, facets = weekday~., geom="line") +
+    scale_x_datetime(labels = date_format("%H:%M"))
 ```
-
-There are no morning walks on weekends.
