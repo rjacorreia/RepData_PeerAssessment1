@@ -35,7 +35,7 @@ I will also plot an additional line with the **mean** value.
 
 
 ```r
-hist(report_data$total_steps, col='green', 
+hist(report_data$total_steps, col='green',
      main = 'Histogram of the total number of steps per day', 
      xlab = 'Number of daily steps')
 abline(v=mean(report_data$total_steps), col = 'red', lwd = 2)
@@ -139,8 +139,10 @@ Now, it is necessary to recalculate the report data to extend it to the full dat
 report_data<-sqldf("select date, sum(steps) as total_steps from df_new_activity group by date")
 
 #Plots
-hist(report_data$total_steps, col='green')
-abline(v=median(report_data$total_steps), col='red', lwd=5)
+hist(report_data$total_steps, col='green',
+     main = 'Histogram of the total number of steps per day', 
+     xlab = 'Number of daily steps')
+abline(v=median(report_data$total_steps), col='red', lwd=2)
 ```
 
 ![](PA1_template_files/figure-html/unnamed-chunk-8-1.png) 
